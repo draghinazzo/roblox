@@ -89,7 +89,7 @@ end
 
 local function stopFlying()
 	flying = false
-	flyBtn.Text = "Activar vuelo"
+	flyBtn.Text = "Activar vuelo2"
 
 	if bodyVelocity then bodyVelocity:Destroy() end
 	if bodyGyro then bodyGyro:Destroy() end
