@@ -107,7 +107,16 @@ game:GetService("RunService").RenderStepped:Connect(function()
 		local moveDir = humanoid.MoveDirection
 		local camCF = camera.CFrame
 
-		local move = (camCF.LookVector * moveDir.Z) + (camCF.RightVector * moveDir.X)
+		local moveDir = humanoid.MoveDirection
+
+		if moveDir.Magnitude > 0 then
+			bodyVelocity.Velocity = moveDir * speed
+		else
+			bodyVelocity.Velocity = Vector3.new(0,0,0)
+		end
+
+		-- Mantener rotación con la cámara
+		bodyGyro.CFrame = camera.CFrame
 
 		bodyVelocity.Velocity = move * speed
 		bodyGyro.CFrame = camCF
