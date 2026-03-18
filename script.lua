@@ -12,8 +12,8 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 -- Ventana
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 300, 0, 200)
-frame.Position = UDim2.new(0.5, -150, 0.5, -100)
+frame.Size = UDim2.new(0, 300, 0, 230) -- AUMENTÉ ALTURA
+frame.Position = UDim2.new(0.5, -150, 0.5, -115)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 
 -- Botón cerrar (X)
@@ -33,9 +33,16 @@ minBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 50)
 -- Botón vuelo
 local flyBtn = Instance.new("TextButton", frame)
 flyBtn.Size = UDim2.new(0, 200, 0, 50)
-flyBtn.Position = UDim2.new(0.5, -100, 0.5, -25)
+flyBtn.Position = UDim2.new(0.5, -100, 0.4, -25)
 flyBtn.Text = "Activar vuelo"
 flyBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 250)
+
+-- NUEVO BOTÓN (acción)
+local tpBtn = Instance.new("TextButton", frame)
+tpBtn.Size = UDim2.new(0, 200, 0, 40)
+tpBtn.Position = UDim2.new(0.5, -100, 0.75, -20)
+tpBtn.Text = "Ir hacia donde miro"
+tpBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 200)
 
 -- Botón restaurar (+)
 local openBtn = Instance.new("TextButton", gui)
@@ -135,6 +142,14 @@ flyBtn.MouseButton1Click:Connect(function()
 	else
 		startFlying()
 	end
+end)
+
+-- NUEVA FUNCIÓN (teleport)
+tpBtn.MouseButton1Click:Connect(function()
+	local lookVector = camera.CFrame.LookVector
+	local distance = 50 -- distancia a donde te manda
+	
+	root.CFrame = root.CFrame + (lookVector * distance)
 end)
 
 --------------------------------------------------
