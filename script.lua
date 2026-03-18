@@ -1,4 +1,4 @@
--- GUI + SISTEMA DE VUELO COMPLETO MEJORADO
+-- GUI + SISTEMA DE VUELO COMPLETO (FIX REAL)
 
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -36,7 +36,7 @@ minBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 50)
 local flyBtn = Instance.new("TextButton", frame)
 flyBtn.Size = UDim2.new(0, 200, 0, 50)
 flyBtn.Position = UDim2.new(0.5, -100, 0.35, -25)
-flyBtn.Text = "Activar vuelo3"
+flyBtn.Text = "Activar vuelo4"
 flyBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 250)
 
 -- Botón teleport
@@ -69,6 +69,31 @@ local bodyVelocity
 local bodyGyro
 
 --------------------------------------------------
+-- CONTROL DE ALTURA
+--------------------------------------------------
+
+local subir = false
+local bajar = false
+
+UserInputService.InputBegan:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.Space then
+		subir = true
+	end
+	if input.KeyCode == Enum.KeyCode.LeftControl then
+		bajar = true
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+	if input.KeyCode == Enum.KeyCode.Space then
+		subir = false
+	end
+	if input.KeyCode == Enum.KeyCode.LeftControl then
+		bajar = false
+	end
+end)
+
+--------------------------------------------------
 -- FUNCIONES DE VUELO
 --------------------------------------------------
 
@@ -78,12 +103,10 @@ local function startFlying()
 
 	bodyVelocity = Instance.new("BodyVelocity")
 	bodyVelocity.MaxForce = Vector3.new(1,1,1) * 100000
-	bodyVelocity.Velocity = Vector3.new(0,0,0)
 	bodyVelocity.Parent = root
 
 	bodyGyro = Instance.new("BodyGyro")
 	bodyGyro.MaxTorque = Vector3.new(1,1,1) * 100000
-	bodyGyro.CFrame = root.CFrame
 	bodyGyro.Parent = root
 
 	humanoid.PlatformStand = true
@@ -91,7 +114,7 @@ end
 
 local function stopFlying()
 	flying = false
-	flyBtn.Text = "Activar vuelo3"
+	flyBtn.Text = "Activar vuelo4"
 
 	if bodyVelocity then bodyVelocity:Destroy() end
 	if bodyGyro then bodyGyro:Destroy() end
@@ -100,26 +123,22 @@ local function stopFlying()
 end
 
 --------------------------------------------------
--- MOVIMIENTO MEJORADO (JOYSTICK + ALTURA)
+-- MOVIMIENTO CORREGIDO (JOYSTICK + CÁMARA + ALTURA)
 --------------------------------------------------
 
 RunService.RenderStepped:Connect(function()
 	if flying and bodyVelocity and bodyGyro then
 		
 		local moveDir = humanoid.MoveDirection
+		local camCF = camera.CFrame
+
 		local y = 0
+		if subir then y = 1 end
+		if bajar then y = -1 end
 
-		-- SUBIR (móvil y PC)
-		if humanoid.Jump then
-			y = 1
-		end
-
-		-- BAJAR (PC)
-		if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-			y = -1
-		end
-
-		local move = Vector3.new(moveDir.X, y, moveDir.Z)
+		-- 🔥 FIX REAL
+		local horizontal = (camCF.RightVector * moveDir.X) + (camCF.LookVector * moveDir.Z)
+		local move = Vector3.new(horizontal.X, y, horizontal.Z)
 
 		if move.Magnitude > 0 then
 			bodyVelocity.Velocity = move.Unit * speed
@@ -127,8 +146,7 @@ RunService.RenderStepped:Connect(function()
 			bodyVelocity.Velocity = Vector3.new(0,0,0)
 		end
 
-		-- Mirar hacia la cámara
-		bodyGyro.CFrame = camera.CFrame
+		bodyGyro.CFrame = camCF
 	end
 end)
 
@@ -136,24 +154,20 @@ end)
 -- BOTONES GUI
 --------------------------------------------------
 
--- Cerrar
 closeBtn.MouseButton1Click:Connect(function()
 	gui:Destroy()
 end)
 
--- Minimizar
 minBtn.MouseButton1Click:Connect(function()
 	frame.Visible = false
 	openBtn.Visible = true
 end)
 
--- Restaurar
 openBtn.MouseButton1Click:Connect(function()
 	frame.Visible = true
 	openBtn.Visible = false
 end)
 
--- Activar / desactivar vuelo
 flyBtn.MouseButton1Click:Connect(function()
 	if flying then
 		stopFlying()
@@ -162,11 +176,9 @@ flyBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
--- Teleport
 tpBtn.MouseButton1Click:Connect(function()
 	local lookVector = camera.CFrame.LookVector
-	local distance = 50
-	root.CFrame = root.CFrame + (lookVector * distance)
+	root.CFrame = root.CFrame + (lookVector * 50)
 end)
 
 --------------------------------------------------
