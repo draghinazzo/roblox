@@ -34,7 +34,7 @@ minBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 50)
 local flyBtn = Instance.new("TextButton", frame)
 flyBtn.Size = UDim2.new(0, 200, 0, 50)
 flyBtn.Position = UDim2.new(0.5, -100, 0.4, -25)
-flyBtn.Text = "Activar vuelo"
+flyBtn.Text = "Activar vuelo2"
 flyBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 250)
 
 -- NUEVO BOTÓN (acción)
