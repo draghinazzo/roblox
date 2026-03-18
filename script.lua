@@ -1,7 +1,9 @@
--- GUI + SISTEMA DE VUELO COMPLETO
+-- GUI + SISTEMA DE VUELO COMPLETO MEJORADO
 
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 --------------------------------------------------
 -- CREAR GUI
@@ -12,7 +14,7 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 -- Ventana
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 300, 0, 230) -- AUMENTÉ ALTURA
+frame.Size = UDim2.new(0, 300, 0, 230)
 frame.Position = UDim2.new(0.5, -150, 0.5, -115)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 
@@ -33,14 +35,14 @@ minBtn.BackgroundColor3 = Color3.fromRGB(200, 200, 50)
 -- Botón vuelo
 local flyBtn = Instance.new("TextButton", frame)
 flyBtn.Size = UDim2.new(0, 200, 0, 50)
-flyBtn.Position = UDim2.new(0.5, -100, 0.4, -25)
-flyBtn.Text = "Activar vuelo2"
+flyBtn.Position = UDim2.new(0.5, -100, 0.35, -25)
+flyBtn.Text = "Activar vuelo3"
 flyBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 250)
 
--- NUEVO BOTÓN (acción)
+-- Botón teleport
 local tpBtn = Instance.new("TextButton", frame)
 tpBtn.Size = UDim2.new(0, 200, 0, 40)
-tpBtn.Position = UDim2.new(0.5, -100, 0.75, -20)
+tpBtn.Position = UDim2.new(0.5, -100, 0.7, -20)
 tpBtn.Text = "Ir hacia donde miro"
 tpBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 200)
 
@@ -89,7 +91,7 @@ end
 
 local function stopFlying()
 	flying = false
-	flyBtn.Text = "Activar vuelo2"
+	flyBtn.Text = "Activar vuelo3"
 
 	if bodyVelocity then bodyVelocity:Destroy() end
 	if bodyGyro then bodyGyro:Destroy() end
@@ -98,28 +100,35 @@ local function stopFlying()
 end
 
 --------------------------------------------------
--- MOVIMIENTO (JOYSTICK / WASD)
+-- MOVIMIENTO MEJORADO (JOYSTICK + ALTURA)
 --------------------------------------------------
 
-game:GetService("RunService").RenderStepped:Connect(function()
+RunService.RenderStepped:Connect(function()
 	if flying and bodyVelocity and bodyGyro then
 		
 		local moveDir = humanoid.MoveDirection
-		local camCF = camera.CFrame
+		local y = 0
 
-		local moveDir = humanoid.MoveDirection
-
-		if moveDir.Magnitude == 0 then
-			-- Avanza hacia la cámara
-			bodyVelocity.Velocity = camera.CFrame.LookVector * speed
-		else
-			bodyVelocity.Velocity = moveDir * speed
+		-- SUBIR (móvil y PC)
+		if humanoid.Jump then
+			y = 1
 		end
 
-		bodyGyro.CFrame = camera.CFrame
+		-- BAJAR (PC)
+		if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+			y = -1
+		end
 
-		bodyVelocity.Velocity = move * speed
-		bodyGyro.CFrame = camCF
+		local move = Vector3.new(moveDir.X, y, moveDir.Z)
+
+		if move.Magnitude > 0 then
+			bodyVelocity.Velocity = move.Unit * speed
+		else
+			bodyVelocity.Velocity = Vector3.new(0,0,0)
+		end
+
+		-- Mirar hacia la cámara
+		bodyGyro.CFrame = camera.CFrame
 	end
 end)
 
@@ -153,16 +162,15 @@ flyBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
--- NUEVA FUNCIÓN (teleport)
+-- Teleport
 tpBtn.MouseButton1Click:Connect(function()
 	local lookVector = camera.CFrame.LookVector
-	local distance = 50 -- distancia a donde te manda
-	
+	local distance = 50
 	root.CFrame = root.CFrame + (lookVector * distance)
 end)
 
 --------------------------------------------------
--- SI MUERE EL JUGADOR (REINICIAR)
+-- REINICIAR AL MORIR
 --------------------------------------------------
 
 player.CharacterAdded:Connect(function(newChar)
