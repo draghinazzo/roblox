@@ -32,20 +32,20 @@ minBtn.Text = "-"
 -- Botón vuelo dentro
 local flyBtn = Instance.new("TextButton", frame)
 flyBtn.Size = UDim2.new(0, 200, 0, 40)
-flyBtn.Position = UDim2.new(0.5, -100, 0.25, -20)
+flyBtn.Position = UDim2.new(0.5, -100, 0.2, -20)
 flyBtn.Text = "Activar vuelo"
 
 -- Botón clonar dentro
 local cloneBtn = Instance.new("TextButton", frame)
 cloneBtn.Size = UDim2.new(0, 200, 0, 40)
-cloneBtn.Position = UDim2.new(0.5, -100, 0.45, -20)
+cloneBtn.Position = UDim2.new(0.5, -100, 0.4, -20)
 cloneBtn.Text = "Iniciar clonación"
 cloneBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
 
 -- Teleport
 local tpBtn = Instance.new("TextButton", frame)
 tpBtn.Size = UDim2.new(0, 200, 0, 40)
-tpBtn.Position = UDim2.new(0.5, -100, 0.65, -20)
+tpBtn.Position = UDim2.new(0.5, -100, 0.6, -20)
 tpBtn.Text = "Ir hacia donde miro"
 
 -- Botón +
@@ -270,4 +270,8 @@ vBtn.MouseButton1Click:Connect(function()
         stopFlying()
     else
         startFlying()
-   
+    end
+end)
+
+-- BOTÓN U (subir mientras presionas)
+upBtn.MouseButton1Down
