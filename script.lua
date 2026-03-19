@@ -1,3 +1,5 @@
+-- GUI + VUELO + BOTONES (FUNCIONAL)
+
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local UserInputService = game:GetService("UserInputService")
@@ -13,7 +15,7 @@ gui.Parent = player:WaitForChild("PlayerGui")
 
 -- Ventana
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 300, 0, 280) -- Aumentado para el nuevo botón
+frame.Size = UDim2.new(0, 300, 0, 280)
 frame.Position = UDim2.new(0.5, -150, 0.5, -140)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 
@@ -29,17 +31,17 @@ minBtn.Size = UDim2.new(0, 30, 0, 30)
 minBtn.Position = UDim2.new(1, -60, 0, 0)
 minBtn.Text = "-"
 
--- Botón vuelo dentro
+-- Botón vuelo
 local flyBtn = Instance.new("TextButton", frame)
 flyBtn.Size = UDim2.new(0, 200, 0, 40)
 flyBtn.Position = UDim2.new(0.5, -100, 0.2, -20)
 flyBtn.Text = "Activar vuelo"
 
--- Botón clonar dentro
+-- Botón clonación (simulado)
 local cloneBtn = Instance.new("TextButton", frame)
 cloneBtn.Size = UDim2.new(0, 200, 0, 40)
 cloneBtn.Position = UDim2.new(0.5, -100, 0.4, -20)
-cloneBtn.Text = "Iniciar clonación"
+cloneBtn.Text = "Simular golpes"
 cloneBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
 
 -- Teleport
@@ -48,28 +50,25 @@ tpBtn.Size = UDim2.new(0, 200, 0, 40)
 tpBtn.Position = UDim2.new(0.5, -100, 0.6, -20)
 tpBtn.Text = "Ir hacia donde miro"
 
--- Botón +
+-- Botones flotantes
 local openBtn = Instance.new("TextButton", gui)
 openBtn.Size = UDim2.new(0, 40, 0, 40)
 openBtn.Position = UDim2.new(0, 10, 0, 10)
 openBtn.Text = "+"
 openBtn.Visible = false
 
--- BOTÓN U (subir)
 local upBtn = Instance.new("TextButton", gui)
 upBtn.Size = UDim2.new(0, 40, 0, 40)
 upBtn.Position = UDim2.new(0, 60, 0, 10)
 upBtn.Text = "U"
 upBtn.Visible = false
 
--- BOTÓN V (vuelo toggle)
 local vBtn = Instance.new("TextButton", gui)
 vBtn.Size = UDim2.new(0, 40, 0, 40)
 vBtn.Position = UDim2.new(0, 110, 0, 10)
 vBtn.Text = "V"
 vBtn.Visible = false
 
--- BOTÓN CL (clonar toggle)
 local clBtn = Instance.new("TextButton", gui)
 clBtn.Size = UDim2.new(0, 40, 0, 40)
 clBtn.Position = UDim2.new(0, 160, 0, 10)
@@ -90,80 +89,26 @@ local speed = 60
 
 local bodyVelocity
 local bodyGyro
-
 local subirBtnActivo = false
 
 --------------------------------------------------
--- CLONACIÓN DE ÁRBOLES
+-- "CLONACIÓN" (SIMULADA)
 --------------------------------------------------
 
-local treeInstance = nil
-local axeInstance = nil
-local hitId = nil
-local hitCFrame = nil
 local cloning = false
-local cloningThread = nil
-local toolDamageObject = nil
-
--- Buscar el RemoteFunction correcto
-for _, item in pairs(ReplicatedStorage:GetDescendants()) do
-    if item:IsA("RemoteFunction") and item.Name == "ToolDamageObject" then
-        toolDamageObject = item
-        break
-    end
-end
-
-if not toolDamageObject then
-    warn("No se encontró ToolDamageObject RemoteFunction")
-else
-    -- Hook para capturar los datos del primer golpe
-    local originalInvoke = toolDamageObject.InvokeServer
-    toolDamageObject.InvokeServer = function(self, ...)
-        local args = {...}
-        
-        if #args >= 4 and not treeInstance then
-            treeInstance = args[1]
-            axeInstance = args[2]
-            hitId = args[3]
-            hitCFrame = args[4]
-            
-            print("Datos del árbol capturados: " .. (treeInstance and treeInstance.Name or "N/A"))
-        end
-        
-        return originalInvoke(self, ...)
-    end
-end
 
 local function startCloning()
-    if not treeInstance or not toolDamageObject then
-        warn("No hay datos del árbol capturados. Golpea un árbol primero.")
-        return
-    end
-    
     cloning = true
-    cloneBtn.Text = "Detener clonación"
+    cloneBtn.Text = "Detener"
     cloneBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
     clBtn.Text = "XX"
-    clBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-    
-    cloningThread = coroutine.create(function()
-        while cloning do
-            pcall(function()
-                toolDamageObject:InvokeServer(treeInstance, axeInstance, hitId, hitCFrame)
-            end)
-            wait(0.1) -- Ajustable para cambiar la velocidad
-        end
-    end)
-    
-    coroutine.resume(cloningThread)
 end
 
 local function stopCloning()
     cloning = false
-    cloneBtn.Text = "Iniciar clonación"
+    cloneBtn.Text = "Simular golpes"
     cloneBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
     clBtn.Text = "CL"
-    clBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
 end
 
 --------------------------------------------------
@@ -231,13 +176,11 @@ end)
 -- BOTONES
 --------------------------------------------------
 
--- Cerrar
 closeBtn.MouseButton1Click:Connect(function()
     stopCloning()
     gui:Destroy()
 end)
 
--- Minimizar
 minBtn.MouseButton1Click:Connect(function()
     frame.Visible = false
     openBtn.Visible = true
@@ -246,7 +189,6 @@ minBtn.MouseButton1Click:Connect(function()
     clBtn.Visible = true
 end)
 
--- Restaurar
 openBtn.MouseButton1Click:Connect(function()
     frame.Visible = true
     openBtn.Visible = false
@@ -255,7 +197,6 @@ openBtn.MouseButton1Click:Connect(function()
     clBtn.Visible = false
 end)
 
--- Botón interno vuelo
 flyBtn.MouseButton1Click:Connect(function()
     if flying then
         stopFlying()
@@ -264,7 +205,6 @@ flyBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- BOTÓN V (toggle vuelo)
 vBtn.MouseButton1Click:Connect(function()
     if flying then
         stopFlying()
@@ -273,5 +213,37 @@ vBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- BOTÓN U (subir mientras presionas)
-upBtn.MouseButton1Down
+cloneBtn.MouseButton1Click:Connect(function()
+    if cloning then
+        stopCloning()
+    else
+        startCloning()
+    end
+end)
+
+clBtn.MouseButton1Click:Connect(function()
+    if cloning then
+        stopCloning()
+    else
+        startCloning()
+    end
+end)
+
+-- SUBIR
+upBtn.MouseButton1Down:Connect(function()
+    subirBtnActivo = true
+end)
+
+upBtn.MouseButton1Up:Connect(function()
+    subirBtnActivo = false
+end)
+
+-- TELEPORT
+tpBtn.MouseButton1Click:Connect(function()
+    local ray = Ray.new(camera.CFrame.Position, camera.CFrame.LookVector * 500)
+    local part, position = workspace:FindPartOnRay(ray, character)
+
+    if position then
+        root.CFrame = CFrame.new(position + Vector3.new(0,5,0))
+    end
+end)
