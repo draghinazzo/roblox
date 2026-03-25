@@ -1,4 +1,4 @@
--- GUI + VUELO + BOTONES (MODO FANTASMA)
+-- GUI + VUELO + BOTONES (FANTASMA + VUELO ESTABLE)
 
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -58,7 +58,6 @@ flyBtn.Size = UDim2.new(0, 200, 0, 40)
 flyBtn.Position = UDim2.new(0.5, -100, 0.2, -20)
 flyBtn.Text = "Activar vuelo"
 
--- BOTÓN FANTASMA (antes CL)
 local ghostBtn = Instance.new("TextButton", frame)
 ghostBtn.Size = UDim2.new(0, 200, 0, 40)
 ghostBtn.Position = UDim2.new(0.5, -100, 0.4, -20)
@@ -106,7 +105,7 @@ local subirBtnActivo = false
 local ghost = false
 
 --------------------------------------------------
--- FANTASMA (NOCLIP + TRANSPARENCIA)
+-- FANTASMA (NOCLIP REAL)
 --------------------------------------------------
 
 local noclipConnection
@@ -119,7 +118,6 @@ local function setGhost(state)
 		ghostBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 150)
 		fBtn.Text = "XX"
 
-		-- Activar noclip constante
 		noclipConnection = RunService.Stepped:Connect(function()
 			if character then
 				for _, v in pairs(character:GetDescendants()) do
@@ -136,7 +134,6 @@ local function setGhost(state)
 		ghostBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 100)
 		fBtn.Text = "F"
 
-		-- Restaurar colisiones
 		if noclipConnection then
 			noclipConnection:Disconnect()
 			noclipConnection = nil
@@ -175,10 +172,10 @@ local function stopFlying()
 end
 
 --------------------------------------------------
--- MOVIMIENTO
+-- MOVIMIENTO (ARREGLADO)
 --------------------------------------------------
 
-RunService.RenderStepped:Connect(function()
+RunService.Heartbeat:Connect(function()
 	if flying and root then
 		
 		local moveDir = Vector3.new(0,0,0)
@@ -199,10 +196,13 @@ RunService.RenderStepped:Connect(function()
 
 		local move = Vector3.new(moveDir.X, y, moveDir.Z)
 
+		-- 🔥 cancelar gravedad
+		local gravityFix = Vector3.new(0, workspace.Gravity, 0)
+
 		if move.Magnitude > 0 then
-			root.AssemblyLinearVelocity = move.Unit * speed
+			root.AssemblyLinearVelocity = (move.Unit * speed) + gravityFix
 		else
-			root.AssemblyLinearVelocity = Vector3.new(0,0,0)
+			root.AssemblyLinearVelocity = gravityFix
 		end
 
 		root.CFrame = CFrame.new(root.Position, root.Position + camera.CFrame.LookVector)
@@ -251,7 +251,6 @@ vBtn.MouseButton1Click:Connect(function()
 	end
 end)
 
--- FANTASMA BOTÓN
 ghostBtn.MouseButton1Click:Connect(function()
 	setGhost(not ghost)
 end)
@@ -260,7 +259,6 @@ fBtn.MouseButton1Click:Connect(function()
 	setGhost(not ghost)
 end)
 
--- SUBIR
 upBtn.MouseButton1Down:Connect(function()
 	subirBtnActivo = true
 end)
@@ -269,7 +267,6 @@ upBtn.MouseButton1Up:Connect(function()
 	subirBtnActivo = false
 end)
 
--- TELEPORT
 tpBtn.MouseButton1Click:Connect(function()
 	if not root then return end
 
