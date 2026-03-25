@@ -1,10 +1,35 @@
--- GUI + VUELO + BOTONES (FUNCIONAL)
+-- GUI + VUELO + BOTONES (MODO FANTASMA)
 
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+--------------------------------------------------
+-- VARIABLES DINÁMICAS
+--------------------------------------------------
+
+local character
+local humanoid
+local root
+
+local function updateCharacter(char)
+	character = char
+	humanoid = char:FindFirstChildOfClass("Humanoid")
+	root = char:FindFirstChild("HumanoidRootPart") or char.PrimaryPart
+
+	if not root then
+		char:GetPropertyChangedSignal("PrimaryPart"):Wait()
+		root = char.PrimaryPart
+	end
+end
+
+updateCharacter(player.Character or player.CharacterAdded:Wait())
+
+player.CharacterAdded:Connect(function(char)
+	task.wait(0.5)
+	updateCharacter(char)
+end)
 
 --------------------------------------------------
 -- GUI
@@ -13,38 +38,33 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local gui = Instance.new("ScreenGui")
 gui.Parent = player:WaitForChild("PlayerGui")
 
--- Ventana
 local frame = Instance.new("Frame", gui)
 frame.Size = UDim2.new(0, 300, 0, 280)
 frame.Position = UDim2.new(0.5, -150, 0.5, -140)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 
--- Cerrar
 local closeBtn = Instance.new("TextButton", frame)
 closeBtn.Size = UDim2.new(0, 30, 0, 30)
 closeBtn.Position = UDim2.new(1, -30, 0, 0)
 closeBtn.Text = "X"
 
--- Minimizar
 local minBtn = Instance.new("TextButton", frame)
 minBtn.Size = UDim2.new(0, 30, 0, 30)
 minBtn.Position = UDim2.new(1, -60, 0, 0)
 minBtn.Text = "-"
 
--- Botón vuelo
 local flyBtn = Instance.new("TextButton", frame)
 flyBtn.Size = UDim2.new(0, 200, 0, 40)
 flyBtn.Position = UDim2.new(0.5, -100, 0.2, -20)
 flyBtn.Text = "Activar vuelo"
 
--- Botón clonación (simulado)
-local cloneBtn = Instance.new("TextButton", frame)
-cloneBtn.Size = UDim2.new(0, 200, 0, 40)
-cloneBtn.Position = UDim2.new(0.5, -100, 0.4, -20)
-cloneBtn.Text = "Simular golpes"
-cloneBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
+-- BOTÓN FANTASMA (antes CL)
+local ghostBtn = Instance.new("TextButton", frame)
+ghostBtn.Size = UDim2.new(0, 200, 0, 40)
+ghostBtn.Position = UDim2.new(0.5, -100, 0.4, -20)
+ghostBtn.Text = "Modo Fantasma"
+ghostBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 100)
 
--- Teleport
 local tpBtn = Instance.new("TextButton", frame)
 tpBtn.Size = UDim2.new(0, 200, 0, 40)
 tpBtn.Position = UDim2.new(0.5, -100, 0.6, -20)
@@ -69,46 +89,45 @@ vBtn.Position = UDim2.new(0, 110, 0, 10)
 vBtn.Text = "V"
 vBtn.Visible = false
 
-local clBtn = Instance.new("TextButton", gui)
-clBtn.Size = UDim2.new(0, 40, 0, 40)
-clBtn.Position = UDim2.new(0, 160, 0, 10)
-clBtn.Text = "CL"
-clBtn.Visible = false
-clBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
+local fBtn = Instance.new("TextButton", gui)
+fBtn.Size = UDim2.new(0, 40, 0, 40)
+fBtn.Position = UDim2.new(0, 160, 0, 10)
+fBtn.Text = "F"
+fBtn.Visible = false
+fBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 100)
 
 --------------------------------------------------
--- PERSONAJE
+-- ESTADOS
 --------------------------------------------------
-
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-local root = character:WaitForChild("HumanoidRootPart")
 
 local flying = false
 local speed = 60
-
-local bodyVelocity
-local bodyGyro
 local subirBtnActivo = false
+local ghost = false
 
 --------------------------------------------------
--- "CLONACIÓN" (SIMULADA)
+-- FANTASMA (NOCLIP + TRANSPARENCIA)
 --------------------------------------------------
 
-local cloning = false
+local function setGhost(state)
+	ghost = state
 
-local function startCloning()
-    cloning = true
-    cloneBtn.Text = "Detener"
-    cloneBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
-    clBtn.Text = "XX"
-end
+	for _, v in pairs(character:GetDescendants()) do
+		if v:IsA("BasePart") then
+			v.CanCollide = not state
+			v.Transparency = state and 0.6 or 0
+		end
+	end
 
-local function stopCloning()
-    cloning = false
-    cloneBtn.Text = "Simular golpes"
-    cloneBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 0)
-    clBtn.Text = "CL"
+	if state then
+		ghostBtn.Text = "Desactivar Fantasma"
+		ghostBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 150)
+		fBtn.Text = "XX"
+	else
+		ghostBtn.Text = "Modo Fantasma"
+		ghostBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 100)
+		fBtn.Text = "F"
+	end
 end
 
 --------------------------------------------------
@@ -116,30 +135,20 @@ end
 --------------------------------------------------
 
 local function startFlying()
-    flying = true
-    flyBtn.Text = "Detener vuelo"
-    vBtn.Text = "XX"
-
-    bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.MaxForce = Vector3.new(1,1,1) * 100000
-    bodyVelocity.Parent = root
-
-    bodyGyro = Instance.new("BodyGyro")
-    bodyGyro.MaxTorque = Vector3.new(1,1,1) * 100000
-    bodyGyro.Parent = root
-
-    humanoid.PlatformStand = true
+	if not root then return end
+	flying = true
+	flyBtn.Text = "Detener vuelo"
+	vBtn.Text = "XX"
 end
 
 local function stopFlying()
-    flying = false
-    flyBtn.Text = "Activar vuelo"
-    vBtn.Text = "V"
+	flying = false
+	flyBtn.Text = "Activar vuelo"
+	vBtn.Text = "V"
 
-    if bodyVelocity then bodyVelocity:Destroy() end
-    if bodyGyro then bodyGyro:Destroy() end
-
-    humanoid.PlatformStand = false
+	if root then
+		root.AssemblyLinearVelocity = Vector3.new(0,0,0)
+	end
 end
 
 --------------------------------------------------
@@ -147,29 +156,34 @@ end
 --------------------------------------------------
 
 RunService.RenderStepped:Connect(function()
-    if flying and bodyVelocity and bodyGyro then
-        
-        local moveDir = humanoid.MoveDirection
-        local y = 0
+	if flying and root then
+		
+		local moveDir = Vector3.new(0,0,0)
 
-        if humanoid.Jump or subirBtnActivo then
-            y = 1
-        end
+		if humanoid then
+			moveDir = humanoid.MoveDirection
+		end
 
-        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-            y = -1
-        end
+		local y = 0
 
-        local move = Vector3.new(moveDir.X, y, moveDir.Z)
+		if (humanoid and humanoid.Jump) or subirBtnActivo then
+			y = 1
+		end
 
-        if move.Magnitude > 0 then
-            bodyVelocity.Velocity = move.Unit * speed
-        else
-            bodyVelocity.Velocity = Vector3.new(0,0,0)
-        end
+		if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+			y = -1
+		end
 
-        bodyGyro.CFrame = camera.CFrame
-    end
+		local move = Vector3.new(moveDir.X, y, moveDir.Z)
+
+		if move.Magnitude > 0 then
+			root.AssemblyLinearVelocity = move.Unit * speed
+		else
+			root.AssemblyLinearVelocity = Vector3.new(0,0,0)
+		end
+
+		root.CFrame = CFrame.new(root.Position, root.Position + camera.CFrame.LookVector)
+	end
 end)
 
 --------------------------------------------------
@@ -177,73 +191,69 @@ end)
 --------------------------------------------------
 
 closeBtn.MouseButton1Click:Connect(function()
-    stopCloning()
-    gui:Destroy()
+	stopFlying()
+	setGhost(false)
+	gui:Destroy()
 end)
 
 minBtn.MouseButton1Click:Connect(function()
-    frame.Visible = false
-    openBtn.Visible = true
-    upBtn.Visible = true
-    vBtn.Visible = true
-    clBtn.Visible = true
+	frame.Visible = false
+	openBtn.Visible = true
+	upBtn.Visible = true
+	vBtn.Visible = true
+	fBtn.Visible = true
 end)
 
 openBtn.MouseButton1Click:Connect(function()
-    frame.Visible = true
-    openBtn.Visible = false
-    upBtn.Visible = false
-    vBtn.Visible = false
-    clBtn.Visible = false
+	frame.Visible = true
+	openBtn.Visible = false
+	upBtn.Visible = false
+	vBtn.Visible = false
+	fBtn.Visible = false
 end)
 
 flyBtn.MouseButton1Click:Connect(function()
-    if flying then
-        stopFlying()
-    else
-        startFlying()
-    end
+	if flying then
+		stopFlying()
+	else
+		startFlying()
+	end
 end)
 
 vBtn.MouseButton1Click:Connect(function()
-    if flying then
-        stopFlying()
-    else
-        startFlying()
-    end
+	if flying then
+		stopFlying()
+	else
+		startFlying()
+	end
 end)
 
-cloneBtn.MouseButton1Click:Connect(function()
-    if cloning then
-        stopCloning()
-    else
-        startCloning()
-    end
+-- FANTASMA BOTÓN
+ghostBtn.MouseButton1Click:Connect(function()
+	setGhost(not ghost)
 end)
 
-clBtn.MouseButton1Click:Connect(function()
-    if cloning then
-        stopCloning()
-    else
-        startCloning()
-    end
+fBtn.MouseButton1Click:Connect(function()
+	setGhost(not ghost)
 end)
 
 -- SUBIR
 upBtn.MouseButton1Down:Connect(function()
-    subirBtnActivo = true
+	subirBtnActivo = true
 end)
 
 upBtn.MouseButton1Up:Connect(function()
-    subirBtnActivo = false
+	subirBtnActivo = false
 end)
 
 -- TELEPORT
 tpBtn.MouseButton1Click:Connect(function()
-    local ray = Ray.new(camera.CFrame.Position, camera.CFrame.LookVector * 500)
-    local part, position = workspace:FindPartOnRay(ray, character)
+	if not root then return end
 
-    if position then
-        root.CFrame = CFrame.new(position + Vector3.new(0,5,0))
-    end
+	local ray = Ray.new(camera.CFrame.Position, camera.CFrame.LookVector * 500)
+	local part, position = workspace:FindPartOnRay(ray, character)
+
+	if position then
+		root.CFrame = CFrame.new(position + Vector3.new(0,5,0))
+	end
 end)
