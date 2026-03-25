@@ -1,4 +1,4 @@
--- GUI + VUELO + BOTONES (FANTASMA + VUELO CONTROLADO)
+-- GUI + VUELO + BOTONES (FANTASMA + VUELO PERFECTO)
 
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -105,7 +105,7 @@ local subirBtnActivo = false
 local ghost = false
 
 --------------------------------------------------
--- FANTASMA (NOCLIP REAL)
+-- FANTASMA (NOCLIP REAL SIN CONFLICTO)
 --------------------------------------------------
 
 local noclipConnection
@@ -118,7 +118,7 @@ local function setGhost(state)
 		ghostBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 150)
 		fBtn.Text = "XX"
 
-		noclipConnection = RunService.Stepped:Connect(function()
+		noclipConnection = RunService.Heartbeat:Connect(function()
 			if character then
 				for _, v in pairs(character:GetDescendants()) do
 					if v:IsA("BasePart") then
@@ -172,7 +172,7 @@ local function stopFlying()
 end
 
 --------------------------------------------------
--- MOVIMIENTO (CONTROL TOTAL SIN GRAVEDAD)
+-- MOVIMIENTO (PERFECTO)
 --------------------------------------------------
 
 RunService.Heartbeat:Connect(function()
@@ -199,10 +199,13 @@ RunService.Heartbeat:Connect(function()
 		local move = Vector3.new(moveDir.X, y, moveDir.Z)
 
 		if move.Magnitude > 0 then
-			root.AssemblyLinearVelocity = move.Unit * speed
+			root.AssemblyLinearVelocity = Vector3.new(
+				move.Unit.X * speed,
+				y * speed,
+				move.Unit.Z * speed
+			)
 		else
-			-- 🔥 flotar en el aire sin subir ni caer
-			root.AssemblyLinearVelocity = Vector3.new(0,0,0)
+			root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
 		end
 
 		root.CFrame = CFrame.new(root.Position, root.Position + camera.CFrame.LookVector)
