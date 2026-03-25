@@ -109,24 +109,47 @@ local ghost = false
 -- FANTASMA (NOCLIP + TRANSPARENCIA)
 --------------------------------------------------
 
+local noclipConnection
+
 local function setGhost(state)
 	ghost = state
-
-	for _, v in pairs(character:GetDescendants()) do
-		if v:IsA("BasePart") then
-			v.CanCollide = not state
-			v.Transparency = state and 0.6 or 0
-		end
-	end
 
 	if state then
 		ghostBtn.Text = "Desactivar Fantasma"
 		ghostBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 150)
 		fBtn.Text = "XX"
+
+		-- Activar noclip constante
+		noclipConnection = RunService.Stepped:Connect(function()
+			if character then
+				for _, v in pairs(character:GetDescendants()) do
+					if v:IsA("BasePart") then
+						v.CanCollide = false
+						v.Transparency = 0.6
+					end
+				end
+			end
+		end)
+
 	else
 		ghostBtn.Text = "Modo Fantasma"
 		ghostBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 100)
 		fBtn.Text = "F"
+
+		-- Restaurar colisiones
+		if noclipConnection then
+			noclipConnection:Disconnect()
+			noclipConnection = nil
+		end
+
+		if character then
+			for _, v in pairs(character:GetDescendants()) do
+				if v:IsA("BasePart") then
+					v.CanCollide = true
+					v.Transparency = 0
+				end
+			end
+		end
 	end
 end
 
