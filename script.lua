@@ -1,4 +1,4 @@
--- GUI + VUELO + BOTONES (FANTASMA + VUELO ESTABLE)
+-- GUI + VUELO + BOTONES (FANTASMA + VUELO CONTROLADO)
 
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -172,7 +172,7 @@ local function stopFlying()
 end
 
 --------------------------------------------------
--- MOVIMIENTO (ARREGLADO)
+-- MOVIMIENTO (CONTROL TOTAL SIN GRAVEDAD)
 --------------------------------------------------
 
 RunService.Heartbeat:Connect(function()
@@ -186,23 +186,23 @@ RunService.Heartbeat:Connect(function()
 
 		local y = 0
 
+		-- SUBIR
 		if (humanoid and humanoid.Jump) or subirBtnActivo then
 			y = 1
 		end
 
+		-- BAJAR
 		if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
 			y = -1
 		end
 
 		local move = Vector3.new(moveDir.X, y, moveDir.Z)
 
-		-- 🔥 cancelar gravedad
-		local gravityFix = Vector3.new(0, workspace.Gravity, 0)
-
 		if move.Magnitude > 0 then
-			root.AssemblyLinearVelocity = (move.Unit * speed) + gravityFix
+			root.AssemblyLinearVelocity = move.Unit * speed
 		else
-			root.AssemblyLinearVelocity = gravityFix
+			-- 🔥 flotar en el aire sin subir ni caer
+			root.AssemblyLinearVelocity = Vector3.new(0,0,0)
 		end
 
 		root.CFrame = CFrame.new(root.Position, root.Position + camera.CFrame.LookVector)
