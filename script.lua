@@ -198,15 +198,22 @@ RunService.Heartbeat:Connect(function()
 
 		local move = Vector3.new(moveDir.X, y, moveDir.Z)
 
-		if move.Magnitude > 0 then
-			root.AssemblyLinearVelocity = Vector3.new(
-				move.Unit.X * speed,
-				y * speed,
-				move.Unit.Z * speed
-			)
-		else
-			root.AssemblyLinearVelocity = Vector3.new(0, 0, 0)
-		end
+		local currentY = root.AssemblyLinearVelocity.Y
+
+        -- Mantener altura si no hay input vertical
+        if y == 0 then
+            y = currentY / speed
+        end
+
+        if move.Magnitude > 0 then
+            root.AssemblyLinearVelocity = Vector3.new(
+                move.Unit.X * speed,
+                y * speed,
+                move.Unit.Z * speed
+            )
+        else
+            root.AssemblyLinearVelocity = Vector3.new(0, currentY, 0)
+        end
 
 		root.CFrame = CFrame.new(root.Position, root.Position + camera.CFrame.LookVector)
 	end
