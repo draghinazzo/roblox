@@ -1,4 +1,4 @@
--- GUI + VUELO + BOTONES (FANTASMA + VUELO PERFECTO)
+-- GUI + VUELO + BOTONES (FANTASMA + VUELO CONTROLADO)
 
 local player = game.Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -105,12 +105,10 @@ local subirBtnActivo = false
 local ghost = false
 
 --------------------------------------------------
--- FANTASMA PRO (NOCLIP + ANTI TODO)
+-- FANTASMA (NOCLIP REAL)
 --------------------------------------------------
 
 local noclipConnection
-local velocityLockConnection
-local godConnection
 
 local function setGhost(state)
 	ghost = state
@@ -120,31 +118,14 @@ local function setGhost(state)
 		ghostBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 150)
 		fBtn.Text = "XX"
 
-		-- 👻 NOCLIP + SIN MASA
-		noclipConnection = RunService.Heartbeat:Connect(function()
+		noclipConnection = RunService.Stepped:Connect(function()
 			if character then
 				for _, v in pairs(character:GetDescendants()) do
 					if v:IsA("BasePart") then
 						v.CanCollide = false
 						v.Transparency = 0.6
-						v.Massless = true
 					end
 				end
-			end
-		end)
-
-		-- 🛡️ ANTI EMPUJES / EXPLOSIONES
-		velocityLockConnection = RunService.Heartbeat:Connect(function()
-			if root then
-				local vel = root.AssemblyLinearVelocity
-				root.AssemblyLinearVelocity = Vector3.new(0, vel.Y, 0)
-			end
-		end)
-
-		-- ❤️ REGENERACIÓN DE VIDA (modo dios parcial)
-		godConnection = RunService.Heartbeat:Connect(function()
-			if humanoid and humanoid.Health < humanoid.MaxHealth then
-				humanoid.Health = humanoid.MaxHealth
 			end
 		end)
 
@@ -153,29 +134,16 @@ local function setGhost(state)
 		ghostBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 100)
 		fBtn.Text = "F"
 
-		-- Desconectar todo
 		if noclipConnection then
 			noclipConnection:Disconnect()
 			noclipConnection = nil
 		end
 
-		if velocityLockConnection then
-			velocityLockConnection:Disconnect()
-			velocityLockConnection = nil
-		end
-
-		if godConnection then
-			godConnection:Disconnect()
-			godConnection = nil
-		end
-
-		-- Restaurar normal
 		if character then
 			for _, v in pairs(character:GetDescendants()) do
 				if v:IsA("BasePart") then
 					v.CanCollide = true
 					v.Transparency = 0
-					v.Massless = false
 				end
 			end
 		end
@@ -204,7 +172,7 @@ local function stopFlying()
 end
 
 --------------------------------------------------
--- MOVIMIENTO (PERFECTO)
+-- MOVIMIENTO (CONTROL TOTAL SIN GRAVEDAD)
 --------------------------------------------------
 
 RunService.Heartbeat:Connect(function()
@@ -230,22 +198,12 @@ RunService.Heartbeat:Connect(function()
 
 		local move = Vector3.new(moveDir.X, y, moveDir.Z)
 
-		local currentY = root.AssemblyLinearVelocity.Y
-
-        -- Mantener altura si no hay input vertical
-        if y == 0 then
-            y = currentY / speed
-        end
-
-        if move.Magnitude > 0 then
-            root.AssemblyLinearVelocity = Vector3.new(
-                move.Unit.X * speed,
-                y * speed,
-                move.Unit.Z * speed
-            )
-        else
-            root.AssemblyLinearVelocity = Vector3.new(0, currentY, 0)
-        end
+		if move.Magnitude > 0 then
+			root.AssemblyLinearVelocity = move.Unit * speed
+		else
+			-- 🔥 flotar en el aire sin subir ni caer
+			root.AssemblyLinearVelocity = Vector3.new(0,0,0)
+		end
 
 		root.CFrame = CFrame.new(root.Position, root.Position + camera.CFrame.LookVector)
 	end
